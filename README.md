@@ -36,7 +36,13 @@ prometheus - DB itself
 cloudwatch_exporter - Cloudwatch metrics API calls
 pushgateway - Receive metrics from short-live jobs
 
+![Prometheus_job_targets](https://github.com/aliaskov/prometheus-grafana-cw/blob/master/screens/Prometheus_job_targets.png)
 
+After some time, prometheus would have some data: 
+
+![prometheus_ui](https://github.com/aliaskov/prometheus-grafana-cw/blob/master/screens/prometheus_ui.png)
+
+No we can connect Grafana and customize it.
 ## Setup Grafana
 
 Navigate to `http://<host-ip>:3000` and login with user ***admin*** password ***admin***. You can change the credentials in the compose file or by supplying the `ADMIN_USER` and `ADMIN_PASSWORD` environment variables on compose up.
