@@ -1,0 +1,95 @@
+region: eu-central-1
+metrics:
+  - aws_namespace: "AWS/EC2"
+    aws_dimensions: [InstanceId]
+    aws_dimensions_select:
+      InstanceId: [$_target]
+    aws_metric_name: CPUUtilization
+    aws_statistics: [Average]
+  - aws_namespace: "AWS/EC2"
+    aws_dimensions: [InstanceId]
+    aws_dimensions_select:
+      InstanceId: [$_target]
+    aws_metric_name: NetworkOut
+    aws_statistics: [Average]
+  - aws_namespace: AWS/ELB
+    aws_metric_name: RequestCount
+    aws_dimensions: [AvailabilityZone, LoadBalancerName]
+    aws_dimension_select:
+      LoadBalancerName: [LoadBalancerName]
+    aws_statistics: [Sum]
+  - aws_namespace: AWS/ELB
+    aws_metric_name: HealthyHostCount
+    aws_dimensions: [AvailabilityZone, LoadBalancerName]
+    aws_statistics: [Average]
+    aws_dimension_select_regex:
+      LoadBalancerName: ["${LOADBALANCERNAME_REGEX}"]
+  - aws_namespace: AWS/ELB
+    aws_metric_name: UnHealthyHostCount
+    aws_dimensions: [AvailabilityZone, LoadBalancerName]
+    aws_statistics: [Average]
+    aws_dimension_select_regex:
+      LoadBalancerName: ["${LOADBALANCERNAME_REGEX}"]
+  - aws_namespace: AWS/ELB
+    aws_metric_name: RequestCount
+    aws_dimensions: [AvailabilityZone, LoadBalancerName]
+    aws_statistics: [Sum]
+    aws_dimension_select_regex:
+      LoadBalancerName: ["${LOADBALANCERNAME_REGEX}"]
+  - aws_namespace: AWS/ELB
+    aws_metric_name: Latency
+    aws_dimensions: [AvailabilityZone, LoadBalancerName]
+    aws_statistics: [Average]
+    aws_dimension_select_regex:
+      LoadBalancerName: ["${LOADBALANCERNAME_REGEX}"]
+  - aws_namespace: AWS/ELB
+    aws_metric_name: SurgeQueueLength
+    aws_dimensions: [AvailabilityZone, LoadBalancerName]
+    aws_statistics: [Maximum, Sum]
+    aws_dimension_select_regex:
+      LoadBalancerName: ["${LOADBALANCERNAME_REGEX}"]
+  - aws_namespace: "AWS/VPN"
+    aws_dimensions: [VpnId]
+    aws_dimensions_select:
+      VpnId: [$_target]
+    aws_metric_name: TunnelState
+    aws_statistics: [Average]
+    range_seconds: 3600
+  - aws_namespace: "AWS/VPN"
+    aws_dimensions: [VpnId]
+    aws_dimensions_select:
+      VpnId: [$_target]
+    aws_metric_name: TunnelDataIn
+    aws_statistics: [Average]
+    range_seconds: 3600
+  - aws_namespace: "AWS/VPN"
+    aws_dimensions: [VpnId]
+    aws_dimensions_select:
+      VpnId: [$_target]
+    aws_metric_name: TunnelDataOut
+    aws_statistics: [Average]
+    range_seconds: 3600
+  - aws_namespace: "AWS/Lambda"
+    aws_dimensions: [FunctionName]
+    aws_dimensions_select_regex:
+      FunctionName: .*
+    aws_metric_name: Duration
+    aws_statistics: [Maximum]
+# tasks:
+#  - name: billing
+region: us-east-1
+metrics:
+  - aws_namespace: "AWS/Billing"
+    aws_dimensions: [Currency]
+    aws_dimensions_select:
+      Currency: [USD]
+    aws_metric_name: EstimatedCharges
+    aws_statistics: [Average]
+    range_seconds: 86400
+  - aws_namespace: "AWS/Billing"
+    aws_dimensions: [ServiceName,Currency]
+    aws_dimensions_select_regex:
+      ServiceName: AWS.*
+    aws_metric_name: EstimatedCharges
+    aws_statistics: [Average]
+    range_seconds: 86400

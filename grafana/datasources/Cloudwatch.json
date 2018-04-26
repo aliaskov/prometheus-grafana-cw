@@ -1,0 +1,6 @@
+{
+    "name":"Cloudwatch",
+    "type":"Cloudwatch",
+    "authType":"arn",
+    "defaultRegion":"eu-central-1"
+  }

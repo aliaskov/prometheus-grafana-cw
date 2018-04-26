@@ -1,0 +1,413 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Dockerized GrafanaPrometheus CloudFormation template",
+    "Parameters": {
+        "KeyPair": {
+            "Type": "String",
+            "Description": "Key pair name.",
+            "Default": "build"
+        },
+        "VpcStackId": {
+            "Description": "Id of desired VPC",
+            "Type": "String",
+            "Default": "vpc-XXXXXXXX"
+        },
+        "AvailabilityZone": {
+            "Description": "AvailabilityZone of Stack",
+            "Type": "String",
+            "Default": "eu-central-1c"
+        },
+
+        "SubnetId": {
+            "Description": "Id of desired subnet",
+            "Type": "String",
+            "Default": "subnet-XXXXXXXX"
+        },
+        "Domain": {
+            "Type": "String",
+            "Description": "Domain that serves as HostedZone for Route53.",
+            "Default": "aws.funkedigital.de"
+        },
+        "VolumeSize": {
+            "Type": "String",
+            "Description": "GrafanaPrometheus Data Volume size",
+            "Default": "500"
+        },
+        "VolumeType": {
+            "Type": "String",
+            "Description": "GrafanaPrometheus Data Volume type",
+            "Default": "gp2"
+        },
+        "InstanceType": {
+            "Type": "String",
+            "Description": "Try to avoid new instance types, as they use HVM hypervisor",
+            "Default": "t2.medium"
+        }
+    },
+    "Mappings": {
+        "AmazonLinuxAmi": {
+            "us-east-1": {
+                "Ami": "ami-fad25980"
+            },
+            "us-east-2": {
+                "Ami": "ami-58f5db3d"
+            },
+            "us-west-1": {
+                "Ami": "ami-62e0d802"
+            },
+            "us-west-2": {
+                "Ami": "ami-7114c909"
+            },
+            "eu-west-2": {
+                "Ami": "ami-dbfee1bf"
+            },
+            "eu-central-1": {
+                "Ami": "ami-ac055447"
+            },
+            "eu-west-1": {
+                "Ami": "ami-4cbe0935"
+            }
+        }
+    },
+    "Resources": {
+        "RecordSet": {
+            "Type": "AWS::Route53::RecordSet",
+            "Properties": {
+                "HostedZoneName": {
+                    "Fn::Sub": "${Domain}."
+                },
+                "Name": {
+                    "Fn::Sub": "${AWS::StackName}.${Domain}."
+                },
+                "Type": "A",
+                "TTL": "60",
+                "ResourceRecords": [{
+                    "Fn::GetAtt": [
+                        "Instance",
+                        "PrivateIp"
+                    ]
+                }]
+            }
+        },
+        "SecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "GrafanaPrometheus_sg",
+                "VpcId": {
+                    "Fn::Sub": "${VpcStackId}"
+                },
+                "SecurityGroupIngress": [{
+                    "IpProtocol": "tcp",
+                    "FromPort": 9090,
+                    "ToPort": 9090,
+                    "CidrIp": "10.0.0.0/8"
+                }, {
+                    "IpProtocol": "tcp",
+                    "FromPort": 22,
+                    "ToPort": 22,
+                    "CidrIp": "10.0.0.0/8"
+                }, {
+                    "IpProtocol": "tcp",
+                    "FromPort": 80,
+                    "ToPort": 80,
+                    "CidrIp": "10.0.0.0/8"
+                }, {
+                    "IpProtocol": "tcp",
+                    "FromPort": 9093,
+                    "ToPort": 9093,
+                    "CidrIp": "0.0.0.0/0"
+                }, {
+                    "IpProtocol": "tcp",
+                    "FromPort": 3000,
+                    "ToPort": 3000,
+                    "CidrIp": "0.0.0.0/0"
+                }, {
+                    "IpProtocol": "tcp",
+                    "FromPort": 443,
+                    "ToPort": 443,
+                    "CidrIp": "10.0.0.0/8"
+                }],
+                "Tags": [{
+                    "Key": "name",
+                    "Value": {
+                        "Fn::Join": [
+                            "-", [{
+                                    "Ref": "AWS::StackName"
+                                },
+                                "GrafanaPrometheus"
+                            ]
+                        ]
+                    }
+                }, {
+                    "Key": "maintainer",
+                    "Value": "devops"
+                }]
+            }
+        },
+        "DataVolume": {
+            "Type": "AWS::EC2::Volume",
+            "Properties": {
+                "Size": {
+                    "Ref": "VolumeSize"
+                },
+                "VolumeType": {
+                    "Ref": "VolumeType"
+                },
+                "AvailabilityZone": {
+                    "Fn::Sub": "${AvailabilityZone}"
+                },
+                "Tags": [{
+                    "Key": "Backup",
+                    "Value": "true"
+                }, {
+                    "Key": "maintainer",
+                    "Value": "devops"
+                }, {
+                    "Key": "Name",
+                    "Value": {
+                        "Fn::Sub": "${AWS::StackName}-data"
+                    }
+                }]
+            },
+            "DeletionPolicy": "Snapshot"
+        },
+        "Instance": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "AmazonLinuxAmi", {
+                            "Ref": "AWS::Region"
+                        },
+                        "Ami"
+                    ]
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "AvailabilityZone": {
+                    "Fn::Sub": "${AvailabilityZone}"
+                },
+                "IamInstanceProfile": {
+                    "Ref": "GrafanaPrometheusInstanceProfile"
+                },
+                "KeyName": {
+                    "Ref": "KeyPair"
+                },
+                "NetworkInterfaces": [{
+                    "DeviceIndex": "0",
+                    "SubnetId": {
+                        "Fn::Sub": "${SubnetId}"
+                    },
+                    "GroupSet": [{
+                        "Ref": "SecurityGroup"
+                    }]
+                }],
+                "Volumes": [{
+                    "VolumeId": {
+                        "Ref": "DataVolume"
+                    },
+                    "Device": "/dev/sdk"
+                }],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "", [
+                                "#!/bin/bash -xe\n",
+                                "exec > >(tee /var/log/user-data.log|logger -t user-data ) 2>&1\n",
+                                "if ! blkid /dev/xvdk; then mkfs -t ext4 /dev/xvdk; fi\n",
+                                "mount /dev/xvdk /opt\n",
+                                "echo \"/dev/xvdk /opt ext4 defaults,nofail 0 2\" >> /etc/fstab\n",
+                                "sudo yum update -y\n",
+                                "sudo yum install -y git\n",
+                                "sudo mkdir -p /opt/GrafanaPrometheus\n",
+                                "sudo chown ec2-user:ec2-user /opt/GrafanaPrometheus\n",
+                                "git clone https://github.com/stefanprodan/dockprom.git /opt/GrafanaPrometheus/\n",
+                                "sudo curl -L https://github.com/docker/compose/releases/download/1.20.1/docker-compose-Linux-x86_64 -o /usr/local/bin/docker-compose\n",
+                                "sudo chmod +x /usr/local/bin/docker-compose\n",
+                                "docker-compose -f /opt/GrafanaPrometheus/docker-compose.yml up -d"
+                            ]
+                        ]
+                    }
+                },
+                "Tags": [{
+                    "Key": "maintainer",
+                    "Value": "devops"
+                }, {
+                    "Key": "Name",
+                    "Value": {
+                        "Fn::Sub": "${AWS::StackName}"
+                    }
+                }]
+            }
+        },
+        "GrafanaPrometheusRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [{
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [
+                                "ec2.amazonaws.com"
+                            ]
+                        },
+                        "Action": [
+                            "sts:AssumeRole"
+                        ]
+                    }]
+                },
+                "Path": "/"
+            }
+        },
+        "GrafanaPrometheusRolePolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "GrafanaPrometheusRolePolicy",
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [{
+                            "Effect": "Allow",
+                            "Action": "ec2:Describe*",
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": "elasticloadbalancing:Describe*",
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "cloudwatch:ListMetrics",
+                                "cloudwatch:GetMetricStatistics",
+                                "cloudwatch:Describe*"
+                            ],
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": "autoscaling:Describe*",
+                            "Resource": "*"
+                        },
+                        {
+                            "Action": [
+                                "application-autoscaling:DescribeScalableTargets",
+                                "application-autoscaling:DescribeScalingActivities",
+                                "application-autoscaling:DescribeScalingPolicies",
+                                "cloudwatch:DescribeAlarmHistory",
+                                "cloudwatch:DescribeAlarms",
+                                "cloudwatch:DescribeAlarmsForMetric",
+                                "cloudwatch:GetMetricStatistics",
+                                "cloudwatch:ListMetrics",
+                                "datapipeline:DescribeObjects",
+                                "datapipeline:DescribePipelines",
+                                "datapipeline:GetPipelineDefinition",
+                                "datapipeline:ListPipelines",
+                                "datapipeline:QueryObjects",
+                                "dynamodb:BatchGetItem",
+                                "dynamodb:DescribeTable",
+                                "dynamodb:GetItem",
+                                "dynamodb:ListTables",
+                                "dynamodb:Query",
+                                "dynamodb:Scan",
+                                "dynamodb:DescribeReservedCapacity",
+                                "dynamodb:DescribeReservedCapacityOfferings",
+                                "dynamodb:ListTagsOfResource",
+                                "dynamodb:DescribeTimeToLive",
+                                "dynamodb:DescribeLimits",
+                                "dynamodb:ListGlobalTables",
+                                "dynamodb:DescribeGlobalTable",
+                                "dynamodb:DescribeBackup",
+                                "dynamodb:ListBackups",
+                                "dynamodb:DescribeContinuousBackups",
+                                "iam:GetRole",
+                                "iam:ListRoles",
+                                "sns:ListSubscriptionsByTopic",
+                                "sns:ListTopics",
+                                "lambda:ListFunctions",
+                                "lambda:ListEventSourceMappings",
+                                "lambda:GetFunctionConfiguration"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        },
+                        {
+                            "Action": [
+                                "elasticache:Describe*"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        },
+                        {
+                            "Action": [
+                                "rds:Describe*",
+                                "rds:ListTagsForResource",
+                                "ec2:DescribeAccountAttributes",
+                                "ec2:DescribeAvailabilityZones",
+                                "ec2:DescribeInternetGateways",
+                                "ec2:DescribeSecurityGroups",
+                                "ec2:DescribeSubnets",
+                                "ec2:DescribeVpcAttribute",
+                                "ec2:DescribeVpcs"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        },
+                        {
+                            "Action": [
+                                "cloudwatch:GetMetricStatistics",
+                                "logs:DescribeLogStreams",
+                                "logs:GetLogEvents"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "ecr:GetAuthorizationToken",
+                                "ecr:BatchCheckLayerAvailability",
+                                "ecr:GetDownloadUrlForLayer",
+                                "ecr:GetRepositoryPolicy",
+                                "ecr:DescribeRepositories",
+                                "ecr:ListImages",
+                                "ecr:DescribeImages",
+                                "ecr:BatchGetImage"
+                            ],
+                            "Resource": "*"
+                        },
+                        {
+                            "Action": [
+                                "autoscaling:Describe*",
+                                "cloudwatch:Describe*",
+                                "cloudwatch:Get*",
+                                "cloudwatch:List*",
+                                "logs:Get*",
+                                "logs:List*",
+                                "logs:Describe*",
+                                "logs:TestMetricFilter",
+                                "sns:Get*",
+                                "sns:List*"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        }
+                    ]
+                },
+                "Roles": [{
+                    "Ref": "GrafanaPrometheusRole"
+                }]
+            }
+        },
+        "GrafanaPrometheusInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Roles": [{
+                    "Ref": "GrafanaPrometheusRole"
+                }]
+            }
+        }
+    }
+}
