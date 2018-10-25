@@ -26,7 +26,7 @@
         "Domain": {
             "Type": "String",
             "Description": "Domain that serves as HostedZone for Route53.",
-            "Default": "aws.funkedigital.de"
+            "Default": "aws.domain.com"
         },
         "VolumeSize": {
             "Type": "String",
@@ -47,7 +47,7 @@
     "Mappings": {
         "AmazonLinuxAmi": {
             "us-east-1": {
-                "Ami": "ami-fad25980"
+                "Ami": "ami-0a0c6574ce16ce87a"
             },
             "us-east-2": {
                 "Ami": "ami-58f5db3d"
@@ -62,10 +62,10 @@
                 "Ami": "ami-dbfee1bf"
             },
             "eu-central-1": {
-                "Ami": "ami-ac055447"
+                "Ami": "ami-0b9fee3a2d0596ed1"
             },
             "eu-west-1": {
-                "Ami": "ami-4cbe0935"
+                "Ami": "ami-066826c6a40879d75"
             }
         }
     },
@@ -84,7 +84,7 @@
                 "ResourceRecords": [{
                     "Fn::GetAtt": [
                         "Instance",
-                        "PrivateIp"
+                        "PublicIp"
                     ]
                 }]
             }
@@ -115,12 +115,12 @@
                     "IpProtocol": "tcp",
                     "FromPort": 9093,
                     "ToPort": 9093,
-                    "CidrIp": "0.0.0.0/0"
+                    "CidrIp": "10.0.0.0/8"
                 }, {
                     "IpProtocol": "tcp",
                     "FromPort": 3000,
                     "ToPort": 3000,
-                    "CidrIp": "0.0.0.0/0"
+                    "CidrIp": "10.0.0.0/8"
                 }, {
                     "IpProtocol": "tcp",
                     "FromPort": 443,

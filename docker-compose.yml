@@ -4,10 +4,6 @@ networks:
   monitoring:
     driver: bridge
 
-volumes:
-    prometheus_data: {}
-    grafana_data: {}
-
 services:
 
   prometheus:
@@ -15,13 +11,13 @@ services:
     container_name: prometheus
     volumes:
       - ./prometheus/:/etc/prometheus/
-      - prometheus_data:/prometheus
+      - ./prometheus/prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention=200h'
+      - '--storage.tsdb.retention=30d'
       - '--web.enable-lifecycle'
     restart: unless-stopped
     ports:
@@ -45,6 +41,18 @@ services:
     networks:
       - monitoring
 
+  blackbox-exporter:
+    image: prom/blackbox-exporter
+    container_name: blackbox-exporter
+    restart: always
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./blackbox-exporter/config:/config
+    command: --config.file=/config/blackbox.yml
+    networks:
+      - monitoring
+
   pushgateway:
     image: prom/pushgateway
     container_name: pushgateway
@@ -58,17 +66,25 @@ services:
     image: grafana/grafana
     container_name: grafana
     volumes:
-      - grafana_data:/var/lib/grafana
+      - ./grafana/grafana_data:/var/lib/grafana
       - ./grafana/datasources:/etc/grafana/datasources
       - ./grafana/dashboards:/etc/grafana/dashboards
       - ./grafana/setup.sh:/setup.sh
     entrypoint: /setup.sh
     depends_on:
       - prometheus
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.frontend.rule=Host:grafana.aws.mydomain.de"
+    #   - "traefik.port=3000"
     environment:
       - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
       - GF_INSTALL_PLUGINS=vonage-status-panel
+      # - GF_EXTERNAL_IMAGE_STORAGE_PROVIDER=s3
+      # - GF_EXTERNAL_IMAGE_STORAGE_S3_BUCKET=funke-monitoring
+      # - GF_EXTERNAL_IMAGE_STORAGE_S3_REGION=eu-central-1
+      # - GF_EXTERNAL_IMAGE_STORAGE_S3_PATH=grafana_images
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -108,7 +124,7 @@ services:
       - monitoring
 
   cadvisor:
-    image: google/cadvisor:latest
+    image: google/cadvisor:v0.30.2
     container_name: cadvisor
     user: root
     privileged: true

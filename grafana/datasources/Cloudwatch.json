@@ -1,6 +1,1 @@
-{
-    "name":"Cloudwatch",
-    "type":"Cloudwatch",
-    "authType":"arn",
-    "defaultRegion":"eu-central-1"
-  }
+{"id":3,"orgId":1,"name":"CloudWatch","type":"cloudwatch","typeLogoUrl":"public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png","access":"proxy","url":"","password":"","user":"","database":"","basicAuth":false,"isDefault":false,"jsonData":{"authType":"arn","defaultRegion":"eu-central-1","keepCookies":[],"timeField":"@timestamp"},"readOnly":false}

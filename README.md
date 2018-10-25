@@ -1,9 +1,8 @@
-
-A monitoring solution for Docker hosts and containers with Prometheus, Grafana, cAdvisor, NodeExporter and alerting with AlertManager.
+A monitoring solution for Docker hosts and containers with Prometheus, Grafana, cAdvisor, NodeExporter and alerting with AlertManager. Ping (icmp, ssh, tcp) and pushgataway included.
 
 A monitoring solution for Docker hosts and containers with [Prometheus](https://prometheus.io/), [Grafana](http://grafana.org/), [cAdvisor](https://github.com/google/cadvisor),
 [NodeExporter](https://github.com/prometheus/node_exporter) and alerting with [AlertManager](https://github.com/prometheus/alertmanager), [CloudWatchExporter](https://github.com/prometheus/node_exporter),
-[PushGateway](https://github.com/prometheus/pushgateway),
+[PushGateway](https://github.com/prometheus/pushgateway), [BlackboxExporter](https://github.com/prometheus/blackbox_exporter)
 
 
 ## Install
@@ -26,6 +25,7 @@ Containers:
 * cAdvisor (containers metrics collector) :8080
 * CloudWatchExporter (export Cloudwatch metrics to Prometheus) :9106
 * PushGateway (Receive metrics from short-live jobs) :9091
+* BlackboxExporter (ping everything!)
 
 ## Setup Prometheus jobs
 
@@ -38,7 +38,7 @@ pushgateway - Receive metrics from short-live jobs
 
 ![Prometheus_job_targets](https://github.com/aliaskov/prometheus-grafana-cw/blob/master/screens/Prometheus_job_targets.png)
 
-After some time, prometheus would have some data: 
+After some time, prometheus would have some data:
 
 ![prometheus_ui](https://github.com/aliaskov/prometheus-grafana-cw/blob/master/screens/prometheus_ui.png)
 
@@ -130,6 +130,9 @@ I've set the Prometheus retention period to 200h and the heap size to 1GB, you c
 ```
 
 Make sure you set the heap size to a maximum of 50% of the total physical memory.
+
+## ping infrastructure
+![BlackboxExporter](https://github.com/aliaskov/prometheus-grafana-cw/blob/master/screens/blackboxexporter_ping.png)
 
 ## Define alerts
 

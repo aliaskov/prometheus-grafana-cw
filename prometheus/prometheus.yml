@@ -23,12 +23,47 @@ scrape_configs:
     scrape_interval: 5s
 # metrics_path defaults to '/metrics'
 # scheme defaults to 'http'.
+  #   static_configs:
+  #     - targets: ['pushgateway:9091']
+  # - job_name: 'jmx-exporter'
+  #   scrape_interval: 5s
+  #   static_configs:
+  #     - targets: ['ip-10-102-67-123.eu-central-1.compute.internal:9404']
+
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module:
+        - icmp_ipv4
+        - http_200_module
     static_configs:
-      - targets: ['pushgateway:9091']
-  - job_name: 'jmx-exporter'
-    scrape_interval: 5s
-    static_configs:
-      - targets: ['ip-10-102-67-123.eu-central-1.compute.internal:9404']
+      - targets:
+        - http://google.de
+        - 127.0.0.1
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115  # This is your blackbox exporter.
+
+#      module: [http_2xx]  # Look for a HTTP 200 response.
+#    static_configs:
+#      - targets:
+#        - http://prometheus.io    # Target to probe with http.
+#        - https://prometheus.io   # Target to probe with https.
+#        - http://example.com:8080 # Target to probe with http on port 8080.
+#    relabel_configs:
+#      - source_labels: [__address__]
+#        target_label: __param_target
+#      - source_labels: [__param_target]
+#        target_label: instance
+#      - target_label: __address__
+#        replacement: 127.0.0.1:9115  # The blackbox exporter's real hostname:port.
+
+
+
 alerting:
   alertmanagers:
   - scheme: http

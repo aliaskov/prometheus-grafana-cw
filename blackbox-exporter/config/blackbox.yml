@@ -1,0 +1,23 @@
+modules:
+#  http_2xx_example:
+#    prober: http
+#    timeout: 5s
+#    http:
+#      method: GET
+#      #protocol: "tcp4"
+#      preferred_ip_protocol: "ip4"
+  http_200_module:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+#      headers:
+#        Content-Type: application/json
+#      body: '{}'
+#  tcp_connect:
+#    prober: tcp
+#    timeout: 5s
+  icmp_ipv4:
+    prober: icmp
+    icmp:
+      preferred_ip_protocol: ip4

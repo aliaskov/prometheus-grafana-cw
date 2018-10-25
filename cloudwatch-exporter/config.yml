@@ -85,11 +85,11 @@ metrics:
       Currency: [USD]
     aws_metric_name: EstimatedCharges
     aws_statistics: [Average]
-    range_seconds: 86400
+    range_seconds: 3600
   - aws_namespace: "AWS/Billing"
     aws_dimensions: [ServiceName,Currency]
     aws_dimensions_select_regex:
       ServiceName: AWS.*
     aws_metric_name: EstimatedCharges
     aws_statistics: [Average]
-    range_seconds: 86400
+    range_seconds: 3600
